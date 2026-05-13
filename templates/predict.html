@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600&display=swap');
+
+  .predict-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+
+  .card-shell {
+    width: 100%;
+    max-width: 780px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 24px;
+    padding: 44px 48px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: #fff;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+  }
+
+  .card-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 32px;
+  }
+
+  /* Trip toggle */
+  .trip-toggle {
+    display: inline-flex;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50px;
+    padding: 4px;
+    margin-bottom: 32px;
+    gap: 2px;
+  }
+
+  .trip-toggle button {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 8px 22px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s;
+    color: rgba(255,255,255,0.5);
+    background: transparent;
+  }
+
+  .trip-toggle button.active {
+    background: #00C2FF;
+    color: #000;
+    font-weight: 600;
+  }
+
+  /* Form labels */
+  .field-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* Inputs & selects */
+  .form-control, .form-select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.925rem;
+    background: rgba(255,255,255,0.07) !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    border-radius: 12px !important;
+    color: #fff !important;
+    padding: 13px 16px !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  .form-control:focus, .form-select:focus {
+    outline: none !important;
+    border-color: #00C2FF !important;
+    box-shadow: 0 0 0 3px rgba(0,194,255,0.12) !important;
+    background: rgba(255,255,255,0.09) !important;
+  }
+
+  .form-select option {
+    background: #1a1a2e;
+    color: #fff;
+  }
+
+  /* Route info badge */
+  .route-badge {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    background: rgba(0,194,255,0.08);
+    border: 1px solid rgba(0,194,255,0.2);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-top: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .route-badge.show { display: flex; flex-wrap: wrap; }
+
+  .badge-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge-item span {
+    color: #00C2FF;
+    font-weight: 600;
+  }
+
+  /* Divider */
+  .form-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.07);
+    margin: 24px 0;
+  }
+
+  /* Submit button */
+  .btn-predict {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #00C2FF, #0084FF);
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    width: 100%;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-top: 8px;
+  }
+
+  .btn-predict:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-predict:active { transform: translateY(0); }
+
+  /* Error */
+  .error-box {
+    background: rgba(255,80,80,0.12);
+    border: 1px solid rgba(255,80,80,0.3);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: #ff8080;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    margin-bottom: 24px;
+  }
+
+  /* Loading state */
+  .btn-predict.loading {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .card-shell { padding: 28px 20px; }
+    .card-title { font-size: 1.5rem; }
+  }
+</style>
+
+<div class="predict-wrap">
+  <div class="card-shell">
+
+    <div class="card-title">Find Your Flight Price</div>
+    <div class="card-sub">AI-powered prediction using real Indian domestic flight data</div>
+
+    {% if error %}
+    <div class="error-box">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <!-- Trip Type Toggle -->
+    <div class="trip-toggle">
+      <button class="active" id="btnOne" onclick="setTrip('one')">One Way</button>
+      <button id="btnRound" onclick="setTrip('round')">Round Trip</button>
+    </div>
+
+    <form action="/result" method="POST" id="mainForm">
+      <input type="hidden" name="trip_type" id="trip_type" value="one">
+
+      <div class="row g-3">
+
+        <!-- Airline -->
+        <div class="col-12">
+          <label class="field-label">Airline</label>
+          <select name="airline" id="airlineSelect" class="form-select" required onchange="onAirlineChange()">
+            {% for a in airlines %}
+            <option value="{{a}}" {% if a == default_airline %}selected{% endif %}>{{a}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- From / To -->
+        <div class="col-md-6">
+          <label class="field-label">From</label>
+          <select name="source" id="sourceSelect" class="form-select" required onchange="onRouteChange()">
+            {% for s in sources %}
+            <option value="{{s}}">{{s}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="field-label">To</label>
+          <select name="destination" id="destSelect" class="form-select" required onchange="onRouteChange()">
+            {% for d in destinations %}
+            <option value="{{d}}">{{d}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Route Info Badge (auto shown) -->
+        <div class="col-12">
+          <div class="route-badge" id="routeBadge">
+            <div class="badge-item">✈️ &nbsp;<span id="badgeDuration">—</span></div>
+            <div class="badge-item">🔁 &nbsp;<span id="badgeStops">—</span></div>
+            <div class="badge-item">🛫 &nbsp;<span id="badgeSrcAp">—</span></div>
+            <div class="badge-item">🛬 &nbsp;<span id="badgeDstAp">—</span></div>
+          </div>
+        </div>
+
+        <!-- Departure Date / Time -->
+        <div class="col-md-6">
+          <label class="field-label">Departure Date</label>
+          <input type="date" name="departure_date" class="form-control" required
+                 min="{{ today }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="field-label">Departure Time</label>
+          <input type="time" name="dep_time" class="form-control" value="12:00" required>
+        </div>
+
+        <!-- Return Date (round trip only) -->
+        <div class="col-md-6" id="returnDiv" style="display:none;">
+          <label class="field-label">Return Date</label>
+          <input type="date" name="return_date" class="form-control">
+        </div>
+
+        <div class="form-divider col-12"></div>
+
+        <!-- Class / Passengers -->
+        <div class="col-md-6">
+          <label class="field-label">Travel Class</label>
+          <select name="travel_class" class="form-select">
+            <option value="Economy">Economy</option>
+            <option value="Business">Business</option>
+            <option value="First Class">First Class</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="field-label">Passengers</label>
+          <input type="number" name="passengers" class="form-control" value="1" min="1" max="10">
+        </div>
+
+        <!-- Submit -->
+        <div class="col-12">
+          <button type="submit" class="btn-predict" id="submitBtn" onclick="setLoading()">
+            Predict Price &rarr;
+          </button>
+        </div>
+
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  // Set today as min date
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('input[type=date]').forEach(el => el.min = today);
+    onRouteChange();
+  });
+
+  function setTrip(t) {
+    document.getElementById('trip_type').value = t;
+    document.getElementById('returnDiv').style.display = (t === 'round') ? 'block' : 'none';
+    document.getElementById('btnOne').classList.toggle('active', t === 'one');
+    document.getElementById('btnRound').classList.toggle('active', t === 'round');
+  }
+
+  function onAirlineChange() {
+    const airline = document.getElementById('airlineSelect').value;
+    fetch(`/get_sources?airline=${encodeURIComponent(airline)}`)
+      .then(r => r.json())
+      .then(sources => {
+        const sel = document.getElementById('sourceSelect');
+        sel.innerHTML = sources.map(s => `<option value="${s}">${s}</option>`).join('');
+        onRouteChange();
+      });
+  }
+
+  function onRouteChange() {
+    const airline = document.getElementById('airlineSelect').value;
+    const source  = document.getElementById('sourceSelect').value;
+
+    // Update destinations
+    fetch(`/get_destinations?airline=${encodeURIComponent(airline)}&source=${encodeURIComponent(source)}`)
+      .then(r => r.json())
+      .then(dests => {
+        const sel = document.getElementById('destSelect');
+        const cur = sel.value;
+        sel.innerHTML = dests.map(d => `<option value="${d}" ${d===cur?'selected':''}>${d}</option>`).join('');
+        fetchRouteInfo();
+      });
+  }
+
+  function fetchRouteInfo() {
+    const airline = document.getElementById('airlineSelect').value;
+    const source  = document.getElementById('sourceSelect').value;
+    const dest    = document.getElementById('destSelect').value;
+
+    fetch(`/get_route_info?airline=${encodeURIComponent(airline)}&source=${encodeURIComponent(source)}&destination=${encodeURIComponent(dest)}`)
+      .then(r => r.json())
+      .then(info => {
+        if (info.error) {
+          document.getElementById('routeBadge').classList.remove('show');
+          return;
+        }
+        document.getElementById('badgeDuration').textContent = info.duration;
+        document.getElementById('badgeStops').textContent    = info.stops === 0 ? 'Non-stop' : `${info.stops} stop(s)`;
+        document.getElementById('badgeSrcAp').textContent    = info.src_airport;
+        document.getElementById('badgeDstAp').textContent    = info.dst_airport;
+        document.getElementById('routeBadge').classList.add('show');
+      });
+  }
+
+  function setLoading() {
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    btn.textContent = 'Predicting...';
+  }
+</script>
+
+{% endblock %}

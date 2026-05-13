@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap');
+
+  .result-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+
+  .result-card {
+    width: 100%;
+    max-width: 620px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 24px;
+    padding: 44px 48px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+    text-align: center;
+  }
+
+  .result-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 8px;
+  }
+
+  .result-route {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .result-meta {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 36px;
+  }
+
+  .price-box {
+    background: linear-gradient(135deg, rgba(0,194,255,0.12), rgba(0,132,255,0.08));
+    border: 1px solid rgba(0,194,255,0.25);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .price-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 8px;
+  }
+
+  .price-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.2rem;
+    color: #00C2FF;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .price-per {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.35);
+  }
+
+  /* Info grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .info-tile {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 16px 12px;
+  }
+
+  .info-tile-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 6px;
+  }
+
+  .info-tile-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* Total row for multi pax or round trip */
+  .total-row {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .total-row-label {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.45);
+  }
+
+  .total-row-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* Buttons */
+  .btn-back {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    border-radius: 12px;
+    padding: 13px 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-back:hover {
+    background: rgba(255,255,255,0.11);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .disclaimer {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.2);
+    margin-top: 20px;
+    line-height: 1.6;
+  }
+</style>
+
+<div class="result-wrap">
+  <div class="result-card">
+
+    <div class="result-label">Price Prediction</div>
+    <div class="result-route">{{ source }} &rarr; {{ destination }}</div>
+    <div class="result-meta">{{ airline }} &nbsp;·&nbsp; {{ dep_date }} &nbsp;·&nbsp; {{ dep_time }} &nbsp;·&nbsp; {{ travel_class }}</div>
+
+    <!-- Main price box -->
+    <div class="price-box">
+      <div class="price-label">Predicted Ticket Price</div>
+      <div class="price-value">₹{{ price }}</div>
+      <div class="price-per">per person</div>
+    </div>
+
+    <!-- Info tiles -->
+    <div class="info-grid">
+      <div class="info-tile">
+        <div class="info-tile-label">Duration</div>
+        <div class="info-tile-value">{{ duration }}</div>
+      </div>
+      <div class="info-tile">
+        <div class="info-tile-label">Stops</div>
+        <div class="info-tile-value">{{ stops }}</div>
+      </div>
+      <div class="info-tile">
+        <div class="info-tile-label">Passengers</div>
+        <div class="info-tile-value">{{ passengers }}</div>
+      </div>
+    </div>
+
+    <!-- Return trip row -->
+    {% if return_price %}
+    <div class="total-row">
+      <div class="total-row-label">Return trip ({{ destination }} → {{ source }})</div>
+      <div class="total-row-value">₹{{ return_price }} <span style="font-weight:400;font-size:0.75rem;color:rgba(255,255,255,0.35)">/ person</span></div>
+    </div>
+    {% endif %}
+
+    <!-- Total row (show if pax > 1 or round trip) -->
+    {% if passengers > 1 or return_price %}
+    <div class="total-row">
+      <div class="total-row-label">Total
+        {% if trip_type == 'round' %}(Round Trip){% endif %}
+        for {{ passengers }} passenger{% if passengers > 1 %}s{% endif %}
+      </div>
+      <div class="total-row-value" style="color:#00C2FF;">₹{{ total }}</div>
+    </div>
+    {% endif %}
+
+    <a href="/predict_page" class="btn-back">← Search Again</a>
+
+    <div class="disclaimer">
+      Prices are AI predictions based on historical data and may vary from actual fares.<br>
+      Always verify with the airline or booking platform before purchasing.
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
